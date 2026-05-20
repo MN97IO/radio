@@ -3,47 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Radio Gotanno</title>
-
 <style>
-*{box-sizing:border-box}
 body{
   margin:0;
-  background:#121212;
+  background:#151515;
+  color:white;
   font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-  color:#fff;
 }
 .player{
   width:320px;
-  margin:auto;
   padding:18px;
-  background:#1b1b1b;
-  border-radius:18px;
-  box-shadow:0 10px 40px rgba(0,0,0,.35);
-}
-.cover{
-  width:100%;
-  aspect-ratio:1/1;
-  border-radius:14px;
-  object-fit:cover;
-  background:#2b2b2b;
+  margin:auto;
+  background:#1f1f1f;
+  border-radius:16px;
 }
 .song{
-  margin-top:14px;
-  font-size:15px;
+  font-size:16px;
   font-weight:700;
-  line-height:1.4;
-  min-height:44px;
-}
-.artist{
-  margin-top:4px;
-  color:#aaa;
-  font-size:13px;
+  line-height:1.45;
+  min-height:52px;
 }
 button{
   width:100%;
   height:46px;
-  margin-top:18px;
+  margin-top:16px;
   border:none;
   border-radius:999px;
   background:white;
@@ -51,48 +34,36 @@ button{
   font-weight:700;
   cursor:pointer;
 }
-input[type=range]{
+input{
   width:100%;
   margin-top:14px;
 }
 .live{
   margin-top:10px;
-  font-size:11px;
-  color:#888;
   text-align:center;
+  color:#888;
+  font-size:11px;
 }
 </style>
 </head>
-
 <body>
 
 <div class="player">
-  <img id="cover" class="cover" src="https://placehold.co/500x500/222/fff?text=♪">
-
   <div id="song" class="song">読み込み中...</div>
-  <div id="artist" class="artist">Radio Gotanno Love</div>
-
   <button id="toggle">▶ PLAY</button>
-
   <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8">
-
-  <div class="live">LIVE STREAM</div>
+  <div class="live">LIVE</div>
 </div>
 
 <script>
-const STREAM_URL = 'https://radio.gotanno.love/;';
-const STATS_URL = 'https://radio.gotanno.love/stats.php';
-
-const audio = new Audio(STREAM_URL);
+const audio = new Audio('https://radio.gotanno.love/;');
 audio.volume = 0.8;
 
+const song = document.getElementById('song');
 const btn = document.getElementById('toggle');
 const vol = document.getElementById('volume');
-const songEl = document.getElementById('song');
-const artistEl = document.getElementById('artist');
-const coverEl = document.getElementById('cover');
 
-btn.onclick = async () => {
+btn.onclick = async ()=>{
   if(audio.paused){
     await audio.play();
   }else{
@@ -100,43 +71,22 @@ btn.onclick = async () => {
   }
 };
 
-audio.onplay = () => btn.textContent = '⏸ STOP';
-audio.onpause = () => btn.textContent = '▶ PLAY';
+audio.onplay = ()=> btn.textContent='⏸ STOP';
+audio.onpause = ()=> btn.textContent='▶ PLAY';
 
-vol.oninput = e => {
-  audio.volume = e.target.value;
-};
-
-async function fetchCover(title){
-  try{
-    const query = encodeURIComponent(title);
-    const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
-    const json = await res.json();
-
-    if(json.results && json.results.length){
-      const item = json.results[0];
-      coverEl.src = item.artworkUrl100.replace('100x100','600x600');
-      artistEl.textContent = item.artistName || 'Unknown artist';
-    }
-  }catch(e){}
-}
+vol.oninput = e => audio.volume = e.target.value;
 
 async function updateSong(){
   try{
-    const res = await fetch(STATS_URL + '?t=' + Date.now());
-    const title = (await res.text()).trim();
-
-    if(title){
-      songEl.textContent = title;
-      fetchCover(title);
-    }
-  }catch(e){
-    songEl.textContent = 'Offline';
+    const r = await fetch('https://radio.gotanno.love/stats.php?t='+Date.now());
+    song.textContent = (await r.text()).trim();
+  }catch{
+    song.textContent = 'Offline';
   }
 }
 
 updateSong();
-setInterval(updateSong, 30000);
+setInterval(updateSong,30000);
 </script>
 
 </body>
