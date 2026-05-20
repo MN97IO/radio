@@ -2,68 +2,135 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Radio Widget</title>
+
 <style>
+*{box-sizing:border-box}
 body{
   margin:0;
-  background:#151515;
-  color:white;
   font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  background:transparent;
 }
-.player{
+.widget{
   width:320px;
-  padding:18px;
-  margin:auto;
-  background:#1f1f1f;
-  border-radius:16px;
+  padding:22px;
+  border-radius:22px;
+  background:linear-gradient(145deg,#161616,#232323);
+  color:white;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.28);
 }
+.bg{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 30% 30%,rgba(255,255,255,.06),transparent 30%),
+    radial-gradient(circle at 70% 70%,rgba(255,255,255,.04),transparent 25%);
+  animation: pulse 8s infinite ease-in-out;
+}
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.08)}
+}
+
+.content{
+  position:relative;
+  z-index:2;
+}
+
+.live{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  letter-spacing:.12em;
+  color:#aaa;
+}
+.dot{
+  width:8px;
+  height:8px;
+  background:#ff4040;
+  border-radius:50%;
+  animation: blink 1.4s infinite;
+}
+@keyframes blink{
+  50%{opacity:.3}
+}
+
 .song{
-  font-size:16px;
+  margin-top:22px;
+  min-height:78px;
+  font-size:18px;
   font-weight:700;
   line-height:1.45;
-  min-height:52px;
+  word-break:break-word;
 }
-button{
-  width:100%;
-  height:46px;
-  margin-top:16px;
+.station{
+  margin-top:8px;
+  font-size:13px;
+  color:#8d8d8d;
+}
+
+.play{
+  margin:24px auto 0;
+  width:72px;
+  height:72px;
+  border-radius:50%;
   border:none;
-  border-radius:999px;
   background:white;
   color:black;
-  font-weight:700;
+  font-size:22px;
   cursor:pointer;
+  display:block;
+  box-shadow:0 4px 20px rgba(255,255,255,.12);
 }
-input{
+
+.range{
+  margin-top:20px;
+}
+input[type=range]{
   width:100%;
-  margin-top:14px;
-}
-.live{
-  margin-top:10px;
-  text-align:center;
-  color:#888;
-  font-size:11px;
+  accent-color:white;
 }
 </style>
 </head>
 <body>
 
-<div class="player">
-  <div id="song" class="song">読み込み中...</div>
-  <button id="toggle">▶ PLAY</button>
-  <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8">
-  <div class="live">LIVE</div>
+<div class="widget">
+  <div class="bg"></div>
+
+  <div class="content">
+    <div class="live">
+      <div class="dot"></div>
+      LIVE RADIO
+    </div>
+
+    <div id="song" class="song">Loading...</div>
+
+    <div class="station">Radio Gotanno Love</div>
+
+    <button id="btn" class="play">▶</button>
+
+    <div class="range">
+      <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8">
+    </div>
+  </div>
 </div>
 
 <script>
-const audio = new Audio('https://radio.gotanno.love/;');
-audio.volume = 0.8;
+const STREAM='https://radio.gotanno.love/;';
+const STATS='https://radio.gotanno.love/stats.php';
 
-const song = document.getElementById('song');
-const btn = document.getElementById('toggle');
-const vol = document.getElementById('volume');
+const audio=new Audio(STREAM);
+audio.volume=.8;
 
-btn.onclick = async ()=>{
+const btn=document.getElementById('btn');
+const vol=document.getElementById('vol');
+const song=document.getElementById('song');
+
+btn.onclick=async()=>{
   if(audio.paused){
     await audio.play();
   }else{
@@ -71,22 +138,25 @@ btn.onclick = async ()=>{
   }
 };
 
-audio.onplay = ()=> btn.textContent='⏸ STOP';
-audio.onpause = ()=> btn.textContent='▶ PLAY';
+audio.onplay=()=>btn.textContent='■';
+audio.onpause=()=>btn.textContent='▶';
 
-vol.oninput = e => audio.volume = e.target.value;
+vol.oninput=e=>{
+  audio.volume=e.target.value;
+};
 
-async function updateSong(){
+async function refresh(){
   try{
-    const r = await fetch('https://radio.gotanno.love/stats.php?t='+Date.now());
-    song.textContent = (await r.text()).trim();
+    const res=await fetch(STATS+'?'+Date.now());
+    const text=(await res.text()).trim();
+    song.textContent=text||'Unknown track';
   }catch{
-    song.textContent = 'Offline';
+    song.textContent='Offline';
   }
 }
 
-updateSong();
-setInterval(updateSong,30000);
+refresh();
+setInterval(refresh,30000);
 </script>
 
 </body>
