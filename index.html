@@ -7,8 +7,6 @@
 <style>
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:transparent}
 .widget{width:340px;padding:22px;border-radius:22px;background:linear-gradient(145deg,#161616,#232323);color:#fff;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.28)}
-.bg{position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.06),transparent 30%),radial-gradient(circle at 70% 70%,rgba(255,255,255,.04),transparent 25%);animation:pulse 8s infinite ease-in-out}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}} .content{position:relative;z-index:2}
 .live{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.12em;color:#aaa}.dot{width:8px;height:8px;background:#ff4040;border-radius:50%;animation:blink 1.4s infinite}@keyframes blink{50%{opacity:.3}}
 .song{margin-top:18px;min-height:72px;font-size:18px;font-weight:700;line-height:1.45;word-break:break-word}.station{margin-top:8px;font-size:13px;color:#8d8d8d}
 .play{margin:20px auto 0;width:72px;height:72px;border:none;border-radius:50%;background:#fff;color:#000;font-size:24px;cursor:pointer;display:block}
@@ -16,7 +14,7 @@
 </style>
 </head>
 <body>
-<div class="widget"><div class="bg"></div><div class="content">
+<div class="widget"><div class="content">
 <div class="live"><div class="dot"></div>LIVE RADIO</div>
 <div id="song" class="song">Ready</div>
 <div class="station">Radio Gotanno Love</div>
