@@ -1,163 +1,58 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Radio Widget</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gotanno Radio Widget</title>
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-  background:transparent;
-}
-.widget{
-  width:320px;
-  padding:22px;
-  border-radius:22px;
-  background:linear-gradient(145deg,#161616,#232323);
-  color:white;
-  position:relative;
-  overflow:hidden;
-  box-shadow:0 12px 40px rgba(0,0,0,.28);
-}
-.bg{
-  position:absolute;
-  inset:0;
-  background:
-    radial-gradient(circle at 30% 30%,rgba(255,255,255,.06),transparent 30%),
-    radial-gradient(circle at 70% 70%,rgba(255,255,255,.04),transparent 25%);
-  animation: pulse 8s infinite ease-in-out;
-}
-@keyframes pulse{
-  0%,100%{transform:scale(1)}
-  50%{transform:scale(1.08)}
-}
-
-.content{
-  position:relative;
-  z-index:2;
-}
-
-.live{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:11px;
-  letter-spacing:.12em;
-  color:#aaa;
-}
-.dot{
-  width:8px;
-  height:8px;
-  background:#ff4040;
-  border-radius:50%;
-  animation: blink 1.4s infinite;
-}
-@keyframes blink{
-  50%{opacity:.3}
-}
-
-.song{
-  margin-top:22px;
-  min-height:78px;
-  font-size:18px;
-  font-weight:700;
-  line-height:1.45;
-  word-break:break-word;
-}
-.station{
-  margin-top:8px;
-  font-size:13px;
-  color:#8d8d8d;
-}
-
-.play{
-  margin:24px auto 0;
-  width:72px;
-  height:72px;
-  border-radius:50%;
-  border:none;
-  background:white;
-  color:black;
-  font-size:22px;
-  cursor:pointer;
-  display:block;
-  box-shadow:0 4px 20px rgba(255,255,255,.12);
-}
-
-.range{
-  margin-top:20px;
-}
-input[type=range]{
-  width:100%;
-  accent-color:white;
-}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:transparent}
+.widget{width:340px;padding:22px;border-radius:22px;background:linear-gradient(145deg,#161616,#232323);color:#fff;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.bg{position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.06),transparent 30%),radial-gradient(circle at 70% 70%,rgba(255,255,255,.04),transparent 25%);animation:pulse 8s infinite ease-in-out}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}} .content{position:relative;z-index:2}
+.live{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.12em;color:#aaa}.dot{width:8px;height:8px;background:#ff4040;border-radius:50%;animation:blink 1.4s infinite}@keyframes blink{50%{opacity:.3}}
+.song{margin-top:18px;min-height:72px;font-size:18px;font-weight:700;line-height:1.45;word-break:break-word}.station{margin-top:8px;font-size:13px;color:#8d8d8d}
+.play{margin:20px auto 0;width:72px;height:72px;border:none;border-radius:50%;background:#fff;color:#000;font-size:24px;cursor:pointer;display:block}
+.range{margin-top:18px} input[type=range]{width:100%;accent-color:white}.log{margin-top:10px;font-size:11px;color:#999;min-height:28px}
 </style>
 </head>
 <body>
-
-<div class="widget">
-  <div class="bg"></div>
-
-  <div class="content">
-    <div class="live">
-      <div class="dot"></div>
-      LIVE RADIO
-    </div>
-
-    <div id="song" class="song">Loading...</div>
-
-    <div class="station">Radio Gotanno Love</div>
-
-    <button id="btn" class="play">▶</button>
-
-    <div class="range">
-      <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8">
-    </div>
-  </div>
-</div>
-
+<div class="widget"><div class="bg"></div><div class="content">
+<div class="live"><div class="dot"></div>LIVE RADIO</div>
+<div id="song" class="song">Ready</div>
+<div class="station">Radio Gotanno Love</div>
+<button id="btn" class="play">▶</button>
+<div class="range"><input id="vol" type="range" min="0" max="1" step="0.01" value="0.8"></div>
+<div id="log" class="log"></div>
+</div></div>
 <script>
-const STREAM='https://radio.gotanno.love/;';
-const STATS='https://radio.gotanno.love/stats.php';
-
-const audio=new Audio(STREAM);
-audio.volume=.8;
-
-const btn=document.getElementById('btn');
-const vol=document.getElementById('vol');
-const song=document.getElementById('song');
-
-btn.onclick=async()=>{
-  if(audio.paused){
-    await audio.play();
-  }else{
-    audio.pause();
-  }
-};
-
-audio.onplay=()=>btn.textContent='■';
-audio.onpause=()=>btn.textContent='▶';
-
-vol.oninput=e=>{
-  audio.volume=e.target.value;
-};
-
-async function refresh(){
-  try{
-    const res=await fetch(STATS+'?'+Date.now());
-    const text=(await res.text()).trim();
-    song.textContent=text||'Unknown track';
-  }catch{
-    song.textContent='Offline';
-  }
+const CONFIG={stream:'https://radio.gotanno.love/;',metaProxy:'https://snowy-sun-7587.ming97i8o.workers.dev/'};
+const el={song:document.getElementById('song'),btn:document.getElementById('btn'),vol:document.getElementById('vol'),log:document.getElementById('log')};
+const audio=new Audio(CONFIG.stream); audio.volume=.8;
+let readerAbort=null;
+function log(msg){ el.log.textContent=msg; console.log('[gotanno]',msg); }
+async function startMetadata(){
+ stopMetadata();
+ updateSong();
+ readerAbort=setInterval(updateSong,15000);
 }
-
-refresh();
-setInterval(refresh,30000);
+async function updateSong(){
+ try{
+  const r=await fetch(CONFIG.metaProxy+'?t='+Date.now());
+  const j=await r.json();
+  if(j.title){ el.song.textContent=j.title; log('Metadata updated'); }
+  else log('No metadata yet');
+ }catch(e){ log('Proxy unavailable'); }
+}
+function stopMetadata(){ if(readerAbort){ clearInterval(readerAbort); readerAbort=null; } }
+el.btn.addEventListener('click', async ()=>{
+ try{
+  if(audio.paused){ await audio.play(); el.btn.textContent='❚❚'; log('Connected'); startMetadata(); }
+  else { audio.pause(); el.btn.textContent='▶'; stopMetadata(); log('Stopped'); }
+ }catch(e){ log('Playback blocked'); }
+});
+el.vol.oninput=e=>audio.volume=parseFloat(e.target.value);
+audio.addEventListener('error',()=>log('Stream unavailable'));
 </script>
-
 </body>
 </html>
+
