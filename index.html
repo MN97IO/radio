@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Gotanno Radio Widget</title>
 <style>
-*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:transparent;}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:transparent;display:flex;justify-content:center;align-items:center;min-height:100vh;}
 .widget{width:340px;padding:22px;border-radius:22px;background:linear-gradient(145deg,#161616,#232323);color:#fff;position:relative;overflow:hidden;}
 .bg {position: absolute;inset: 0;display: none;}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}} .content{position:relative;z-index:2}
@@ -55,3 +55,4 @@ audio.addEventListener('error',()=>log('Stream unavailable'));
 </script>
 </body>
 </html>
+
