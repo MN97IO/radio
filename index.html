@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Radio Widget</title>
+
+<style>
+/* ==========================================================================
+   1. 기본 레이아웃 및 초기화
+   ========================================================================== */
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  background:transparent;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+
+.widget{
+  width:340px;
+  padding:22px;
+  border-radius:22px;
+  background:linear-gradient(145deg, #161616, #232323);
+  color:#fff;
+  overflow:hidden;
+  position:relative;
+}
+
+.menu-btn{
+  position:absolute;
+  top:20px;
+  right:22px;
+  width:34px;
+  height:34px;
+  border:none;
+  border-radius:10px;
+  background:#2d2d2d;
+  color:white;
+  cursor:pointer;
+  z-index:30;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ==========================================================================
+   2. 상단 타이틀 및 애니메이션
+   ========================================================================== */
+.top-title{
+  position: relative;
+  z-index: 25;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:13px;
+  letter-spacing:.08em;
+  color:#aaa;
+  height:34px;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.top-title.switching {
+  opacity: 0;
+}
+
+.dot{
+  width:8px;
+  height:8px;
+  background:#ff4040;
+  border-radius:50%;
+  animation:blink 1.4s infinite;
+}
+
+.static-dot {
+  width:8px;
+  height:8px;
+  background:#444444;
+  border-radius:50%;
+}
+
+@keyframes blink{ 50%{ opacity:.3; } }
+
+/* ==========================================================================
+   3. 커스텀 드롭다운 필터 (UI 고정 및 말줄임 처리)
+   ========================================================================== */
+.filters {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  position: relative;
+  z-index: 5;
+  width: 100%;
+}
+
+.custom-select {
+  flex: 1 1 50%;
+  max-width: calc(50% - 4px); /* gap 절반을 제외한 완벽한 1:1 분할 고정 */
+  position: relative;
+  font-size: 12px;
+  user-select: none;
+}
+
+.select-trigger {
+  width: 100%;
+  background: #2a2a2a;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 30px 10px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 글자 넘침 방지 말줄임(...) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1L5 5L9 1' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 12px) center;
+}
+
+.select-options{
+  position:absolute;
+  top:calc(100% + 4px);
+  left:0;
+  right:0;
+  background:#2a2a2a;
+  border-radius:10px;
+  margin:0;
+  padding:0;
+  list-style:none;
+  max-height: 0;
+  overflow:hidden;
+  opacity: 0;
+  box-shadow:0 8px 16px rgba(0,0,0,0.5);
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: max-height 0.25s ease-out, opacity 0.2s ease-out, transform 0.25s ease-out;
+  z-index: 10;
+}
+
+.custom-select.open .select-options{
+  opacity: 1;
+  max-height: 200px;
+  overflow-y: auto;
+  transform: translateY(0);
+  pointer-events: auto;
+  padding: 4px 0;
+}
+
+.select-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 내부 옵션 글자도 넘치면 말줄임(...) 처리 */
+}
+
+.select-option:hover,
+.select-option.selected{
+  background:#ffffff !important;
+  color:#000000 !important;
+}
+
+/* 스크롤바 스타일 */
+.select-options::-webkit-scrollbar,
+.history-list-wrap::-webkit-scrollbar{ 
+  width:6px; 
+}
+.select-options::-webkit-scrollbar-track,
+.history-list-wrap::-webkit-scrollbar-track{ 
+  background:transparent; 
+}
+.select-options::-webkit-scrollbar-thumb,
+.history-list-wrap::-webkit-scrollbar-thumb{ 
+  background:#555; border-radius:999px; 
+}
+.select-options::-webkit-scrollbar-thumb:hover,
+.history-list-wrap::-webkit-scrollbar-thumb:hover{ 
+  background:#777; 
+}
+
+/* ==========================================================================
+   4. 최근 청취 패널 (History)
+   ========================================================================== */
+.history-panel{
+  position:absolute;
+  inset:0;
+  background:#1b1b1b;
+  padding:74px 22px 22px;
+  z-index:10;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+  transition: transform 0.3s ease-out, opacity 0.25s ease-out;
+}
+
+.history-panel.open{
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.history-list-wrap {
+  flex:1;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:#5a5a5a transparent;
+  padding-right:4px;
+}
+
+.history-list{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.history-station{
+  font-size:13px;
+  color:#ffffff;
+  opacity:.92;
+  cursor:pointer;
+  display:inline-block;
+  transition:color 0.2s;
+}
+
+.history-station:hover{
+  color:#aaa;
+  text-decoration:underline;
+}
+
+.history-track{
+  margin-top:6px;
+  margin-left:12px;
+  font-size:12px;
+  color:#a9a9a9;
+  line-height:1.45;
+}
+
+/* ==========================================================================
+   5. 메인 본문 및 컨트롤러
+   ========================================================================== */
+.song{
+  margin-top:18px;
+  min-height:72px;
+  font-size:18px;
+  font-weight:700;
+  line-height:1.45;
+  word-break:break-word;
+}
+
+.station{
+  margin-top:8px;
+  font-size:13px;
+  color:#8d8d8d;
+}
+
+.controls{
+  margin-top:24px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:14px;
+}
+
+.ctrl{
+  width:52px;
+  height:52px;
+  border:none;
+  border-radius:50%;
+  background:#2f2f2f;
+  color:white;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.play{
+  width:72px;
+  height:72px;
+  background:white;
+  color:black;
+  font-size:24px;
+}
+
+.range{ margin-top:20px; }
+input[type=range]{ width:100%; accent-color:white; }
+.log{ margin-top:10px; font-size:11px; color:#999; min-height:28px; }
+</style>
+</head>
+
+<body>
+
+<div class="widget">
+  <button id="menuBtn" class="menu-btn">☰</button>
+
+  <div id="topTitle" class="top-title">
+    <div id="titleDot" class="dot"></div>
+    <span id="titleText">LIVE RADIO</span>
+  </div>
+
+  <div id="historyPanel" class="history-panel">
+    <div class="history-list-wrap">
+      <div id="historyList" class="history-list"></div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div id="countrySelect" class="custom-select">
+      <div class="select-trigger">All Countries</div>
+      <ul class="select-options"></ul>
+    </div>
+
+    <div id="tagSelect" class="custom-select">
+      <div class="select-trigger">All Genres</div>
+      <ul class="select-options"></ul>
+    </div>
+  </div>
+
+  <div id="song" class="song">Loading...</div>
+  <div id="station" class="station">Loading stations...</div>
+
+  <div class="controls">
+    <button id="prev" class="ctrl">⏮</button>
+    <button id="play" class="ctrl play">▶</button>
+    <button id="next" class="ctrl">⏭</button>
+  </div>
+
+  <div class="range">
+    <input id="vol" type="range" min="0" max="1" step="0.01" value="0.8">
+  </div>
+
+  <div id="log" class="log"></div>
+</div>
+
+<script>
+const API = 'https://wild-art-d143.ming97i8o.workers.dev/';
+const HISTORY_KEY = 'radio-history-v1';
+const LAST_STATION_KEY = 'radio-last-station-v1';
+const LAST_FILTER_KEY = 'radio-last-filter-v1';
+
+let STATIONS = [];
+let currentStation = 0;
+let currentCountry = '';
+let currentTag = '';
+let isMenuOpen = false;
+let previousTitle = '';
+let interval = null;
+
+const audio = new Audio();
+audio.volume = 0.8;
+
+const el = {
+  song: document.getElementById('song'),
+  station: document.getElementById('station'),
+  play: document.getElementById('play'),
+  prev: document.getElementById('prev'),
+  next: document.getElementById('next'),
+  vol: document.getElementById('vol'),
+  log: document.getElementById('log'),
+  menuBtn: document.getElementById('menuBtn'),
+  historyPanel: document.getElementById('historyPanel'),
+  historyList: document.getElementById('historyList'),
+  countrySelect: document.getElementById('countrySelect'),
+  tagSelect: document.getElementById('tagSelect'),
+  topTitle: document.getElementById('topTitle'),
+  titleDot: document.getElementById('titleDot'),
+  titleText: document.getElementById('titleText')
+};
+
+function log(msg) {
+  el.log.textContent = msg;
+  console.log('[radio]', msg);
+}
+
+function current() {
+  return STATIONS[currentStation];
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function saveHistory(data) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(data));
+}
+
+function addStationHistory(name, streamUrl) {
+  if (!name || !streamUrl) return;
+  let history = loadHistory();
+  const existing = history.find(x => x.station === name);
+
+  if (existing) {
+    existing.stream = streamUrl;
+    existing.country = currentCountry;
+    existing.tag = currentTag;
+    history = history.filter(x => x.station !== name);
+    history.unshift(existing);
+  } else {
+    history.unshift({ station: name, stream: streamUrl, tracks: [], country: currentCountry, tag: currentTag });
+  }
+  history = history.slice(0, 20);
+  saveHistory(history);
+}
+
+function addTrackHistory(stationName, title) {
+  if (!title) return;
+  let history = loadHistory();
+  let station = history.find(x => x.station === stationName);
+  if (!station) return;
+
+  if (station.tracks[0] !== title) {
+    station.tracks.unshift(title);
+    station.tracks = station.tracks.slice(0, 6);
+    saveHistory(history);
+    if (isMenuOpen) renderHistory();
+  }
+}
+
+async function playStationFromHistory(item) {
+  if (!item.stream) { log('Stream metadata missing'); return; }
+
+  currentCountry = item.country || '';
+  currentTag = item.tag || '';
+  
+  setCustomSelectValue(el.countrySelect, currentCountry);
+  setCustomSelectValue(el.tagSelect, currentTag);
+  saveFilterState();
+
+  try {
+    const params = new URLSearchParams({ action: 'stations' });
+    if (currentCountry) params.set('country', currentCountry);
+    if (currentTag) params.set('tag', currentTag);
+
+    const r = await fetch(`${API}?${params.toString()}`);
+    STATIONS = await r.json();
+    if (!Array.isArray(STATIONS)) STATIONS = [];
+
+    let found = STATIONS.findIndex(x => x.name === item.station || x.stream === item.stream);
+    if (found !== -1) {
+      currentStation = found;
+    } else {
+      STATIONS.unshift({ name: item.station, stream: item.stream });
+      currentStation = 0;
+    }
+
+    loadStation(currentStation);
+    audio.play().then(() => { el.play.textContent = '❚❚'; startPolling(); log('Connected'); }).catch(() => log('playback blocked'));
+  } catch(e) {
+    log('History transition failed');
+  }
+  toggleMenu(false);
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  const fragment = document.createDocumentFragment();
+
+  history.forEach(item => {
+    const wrap = document.createElement('div');
+    const station = document.createElement('div');
+    station.className = 'history-station';
+    station.textContent = `[${item.station}]`;
+    station.onclick = () => playStationFromHistory(item);
+    wrap.appendChild(station);
+
+    item.tracks.forEach(track => {
+      const line = document.createElement('div');
+      line.className = 'history-track';
+      line.textContent = `└ ${track}`;
+      wrap.appendChild(line);
+    });
+    fragment.appendChild(wrap);
+  });
+
+  el.historyList.innerHTML = '';
+  el.historyList.appendChild(fragment);
+}
+
+function saveFilterState() {
+  localStorage.setItem(LAST_FILTER_KEY, JSON.stringify({ country: currentCountry, tag: currentTag }));
+}
+
+function restoreFilterState() {
+  try {
+    const savedFilter = JSON.parse(localStorage.getItem(LAST_FILTER_KEY));
+    if (savedFilter) {
+      currentCountry = savedFilter.country || '';
+      currentTag = savedFilter.tag || '';
+      setCustomSelectValue(el.countrySelect, currentCountry);
+      setCustomSelectValue(el.tagSelect, currentTag);
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function loadFiltersFromServer() {
+  try {
+    const [resCountries, resTags] = await Promise.all([
+      fetch(`${API}?action=countries`),
+      fetch(`${API}?action=tags`)
+    ]);
+
+    const countries = await resCountries.json();
+    const tags = await resTags.json();
+
+    // 국가 드롭다운 옵션 바인딩
+    const countryOptionsWrap = el.countrySelect.querySelector('.select-options');
+    let countryHtml = `<li class="select-option selected" data-value="">All Countries</li>`;
+    if (Array.isArray(countries)) {
+      countries.forEach(c => {
+        countryHtml += `<li class="select-option" data-value="${c.code}">${c.name}</li>`;
+      });
+    }
+    countryOptionsWrap.innerHTML = countryHtml;
+
+    // 장르 드롭다운 옵션 바인딩
+    const tagOptionsWrap = el.tagSelect.querySelector('.select-options');
+    let tagHtml = `<li class="select-option selected" data-value="">All Genres</li>`;
+    if (Array.isArray(tags)) {
+      tags.forEach(t => {
+        tagHtml += `<li class="select-option" data-value="${t.value}">${t.name}</li>`;
+      });
+    }
+    tagOptionsWrap.innerHTML = tagHtml;
+
+
+
+  } catch (e) {
+    log('Failed to populate filter options');
+    console.error(e);
+  }
+}
+
+async function loadStations() {
+  try {
+    const params = new URLSearchParams({ action: 'stations' });
+    if (currentCountry) params.set('country', currentCountry);
+    if (currentTag) params.set('tag', currentTag);
+
+    const r = await fetch(`${API}?${params.toString()}`);
+    STATIONS = await r.json();
+
+    if (!Array.isArray(STATIONS) || !STATIONS.length) throw new Error('invalid station data');
+
+    const lastStationName = localStorage.getItem(LAST_STATION_KEY);
+    const found = lastStationName ? STATIONS.findIndex(x => x.name === lastStationName) : 0;
+    const targetIndex = found !== -1 ? found : 0;
+    currentStation = targetIndex;
+    loadStation(targetIndex);
+  } catch (e) {
+    log('station load failed');
+  }
+}
+
+async function fetchMetadata() {
+  const station = current();
+  if (!station) return;
+  try {
+    const r = await fetch(`${API}?stream=${encodeURIComponent(station.stream)}&name=${encodeURIComponent(station.name)}`);
+    const data = await r.json();
+    const title = data.track?.title || 'No metadata';
+
+    el.song.textContent = title;
+    el.station.textContent = data.station?.name || station.name;
+
+    if (title !== previousTitle && title !== 'No metadata') {
+      previousTitle = title; addTrackHistory(station.name, title);
+    }
+  } catch (e) {
+    el.song.textContent = 'Metadata unavailable'; log('metadata failed');
+  }
+}
+
+function startPolling() { stopPolling(); fetchMetadata(); interval = setInterval(fetchMetadata, 15000); }
+function stopPolling() { if (interval) { clearInterval(interval); interval = null; } }
+
+function loadStation(index) {
+  if (STATIONS.length === 0) return;
+  if (index < 0) index = STATIONS.length - 1;
+  if (index >= STATIONS.length) index = 0;
+
+  currentStation = index;
+  const station = current();
+
+  audio.src = station.stream;
+  el.station.textContent = station.name;
+  el.song.textContent = 'Loading...';
+  previousTitle = '';
+
+  addStationHistory(station.name, station.stream);
+  localStorage.setItem(LAST_STATION_KEY, station.name);
+  fetchMetadata();
+  
+  if (!audio.paused) {
+    audio.play().then(() => log('Connected')).catch(() => log('playback blocked'));
+  } else { log('Stopped'); }
+}
+
+function toggleMenu(forceState) {
+  isMenuOpen = forceState !== undefined ? forceState : !isMenuOpen;
+  el.topTitle.classList.add('switching');
+  setTimeout(() => {
+    if (isMenuOpen) {
+      renderHistory(); el.historyPanel.classList.add('open'); el.menuBtn.textContent = '✕';
+      el.titleDot.className = 'static-dot'; el.titleText.textContent = 'RECENT LISTENING';
+    } else {
+      el.historyPanel.classList.remove('open'); el.menuBtn.textContent = '☰';
+      el.titleDot.className = 'dot'; el.titleText.textContent = 'LIVE RADIO';
+    }
+    el.topTitle.classList.remove('switching');
+  }, 100);
+}
+
+function initCustomSelect(selectEl, onChangeCallback) {
+  const trigger = selectEl.querySelector('.select-trigger');
+  
+  trigger.onclick = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.custom-select').forEach(sel => { if(sel !== selectEl) sel.classList.remove('open'); });
+    selectEl.classList.toggle('open');
+  };
+
+  // 내부 옵션 선택 이벤트 핸들러 바인딩 구조 일원화
+  selectEl.addEventListener('click', (e) => {
+    const option = e.target.closest('.select-option');
+    if (!option) return;
+    
+    const value = option.getAttribute('data-value');
+    setCustomSelectValue(selectEl, value);
+    onChangeCallback(value);
+  });
+}
+
+function setCustomSelectValue(selectEl, value) {
+  const trigger = selectEl.querySelector('.select-trigger');
+  const options = selectEl.querySelectorAll('.select-option');
+  options.forEach(option => {
+    if (option.getAttribute('data-value') === value) {
+      option.classList.add('selected'); trigger.textContent = option.textContent;
+    } else { option.classList.remove('selected'); }
+  });
+}
+
+/* Event Listeners */
+el.play.onclick = async () => {
+  try {
+    if (audio.paused) {
+      await audio.play(); el.play.textContent = '❚❚'; startPolling(); log('Connected');
+    } else {
+      audio.pause(); el.play.textContent = '▶'; stopPolling(); log('Stopped');
+    }
+  } catch (e) { log('playback blocked'); }
+};
+
+el.prev.onclick = () => loadStation(currentStation - 1);
+el.next.onclick = () => loadStation(currentStation + 1);
+el.vol.oninput = e => audio.volume = parseFloat(e.target.value);
+
+document.onclick = () => { document.querySelectorAll('.custom-select').forEach(sel => sel.classList.remove('open')); };
+el.menuBtn.onclick = (e) => { e.stopPropagation(); toggleMenu(); };
+audio.addEventListener('error', () => log('stream unavailable'));
+
+// 최초 구동 라이프사이클 훅
+(async () => {
+// 1. 서버에서 필터 내용물 뼈대 가져오기 (Worker 1회 호출)
+  await loadFiltersFromServer();
+  
+  // 2. 로컬스토리지에 저장되어 있던 이전 필터 변수 상태 복구
+  restoreFilterState();
+  
+  // 3. 복구된 최종 필터 조건을 가지고 실제 방송국 리스트 딱 한 번만 요청 (Worker 1회 호출)
+  await loadStations();
+
+  // 4. 모든 초기 로딩이 안전하게 끝난 "이 타이밍"에 드롭박스 클릭 이벤트 바인딩!
+  initCustomSelect(el.countrySelect, (value) => {
+    currentCountry = value; saveFilterState(); loadStations();
+  });
+  initCustomSelect(el.tagSelect, (value) => {
+    currentTag = value; saveFilterState(); loadStations();
+  });
+})();
+</script>
+
+</body>
+</html>
