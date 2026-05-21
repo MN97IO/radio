@@ -588,7 +588,14 @@ function loadStation(index) {
   currentStation = index;
   const station = current();
 
-  audio.src = station.stream;
+  // HTTP 주소인 경우 HTTPS로 강제 변환하여 Mixed Content 차단 우회 시도
+  let streamUrl = station.stream;
+  if (streamUrl.startsWith('http://')) {
+    streamUrl = streamUrl.replace('http://', 'https://');
+  }
+
+  audio.src = streamUrl;
+   
   el.station.textContent = station.name;
   el.song.textContent = 'Loading...';
   previousTitle = '';
